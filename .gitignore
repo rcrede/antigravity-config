@@ -1,0 +1,39 @@
+# Runtime and Session state
+projects/
+.migrated
+*.log
+
+# Environments and Package Managers
+.pixi/
+**/.pixi/
+.venv/
+**/.venv/
+node_modules/
+**/node_modules/
+target/
+**/target/
+
+# Python caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Skill Creator Evaluation workspaces / scratchdirs
+skills/*-workspace/
+**/evals/workspaces/
+scratch/
+**/scratch/
+
+# Referee and dynamic runtime states
+state.json
+**/state.json
+diff.txt
+**/diff.txt
+referee_config.json
+**/referee_config.json
+train2_out.md
+**/train2_out.md
+
+# Secrets & Local machine specific MCP configs
+mcp_config.json

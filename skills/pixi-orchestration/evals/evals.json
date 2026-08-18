@@ -1,0 +1,23 @@
+{
+  "skill_name": "pixi-orchestration",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a new Pixi workspace called `polyglot_app`. Add python and rust via conda-forge. Write a simple rust `hello world` program in a `src` directory and a python script that prints a greeting. Create a task pipeline where running `pixi run build` compiles the rust program using cargo, and `pixi run start` runs both the python script and the compiled rust program. Make `start` depend on `build`.",
+      "expected_output": "A fully functional Pixi workspace containing both Rust and Python environments, with tasks successfully defined and working.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "In an empty directory, initialize a pixi project. Add an environment called `test` that includes the `pytest` package via PyPI, while keeping the main environment lean with just python. Create a dummy python test file. Create a task called `test` that runs `pytest`, and ensure it automatically uses the `test` environment using the `default-environment` setting in `pixi.toml`.",
+      "expected_output": "A Pixi workspace with a multi-environment setup where testing dependencies are isolated and tasks are automatically routed to the correct environment.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Initialize a pixi project. Set up a complex orchestration: add a hidden task `_generate` that runs a python script to output `data.csv`. Create a task `process` that runs a rust program to read `data.csv` and write `result.txt`. The `process` task MUST depend on `_generate`. Configure Pixi caching (`inputs` and `outputs`) so that `_generate` and `process` only run when their respective source scripts change.",
+      "expected_output": "A Pixi workspace showing advanced task dependencies, hidden tasks, and properly configured input/output caching.",
+      "files": []
+    }
+  ]
+}

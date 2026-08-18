@@ -1,0 +1,11 @@
+[workspace]
+authors = ["rcrede <marvin.crede@gmail.com>"]
+channels = ["conda-forge"]
+name = "scripts"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.11.*"

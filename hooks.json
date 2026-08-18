@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/rcrede/.gemini/config/run_extractor.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "multi_replace_file_content|write_to_file|replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python /home/rcrede/Documents/Obsidian\\ Vault/80_System/Hooks/verify_ssot_propagation.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

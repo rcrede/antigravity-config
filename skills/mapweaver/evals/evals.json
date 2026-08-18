@@ -1,0 +1,23 @@
+{
+  "skill_name": "MapWeaver",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need a codemap for this repository. Can you generate it for me so we have an index to search later?",
+      "expected_output": "The skill generates CODEMAP.md files for the target repository.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "We need to update how visualizations are set up. Use MapWeaver to find the exact line numbers and the signature for the visualization setup function.",
+      "expected_output": "The skill returns the exact file and current line number for the visualization setup function using the --query tool.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Where do we plot the FES? Find it for me so I know exactly where to make my edits.",
+      "expected_output": "The skill accurately retrieves the line number for the FES plotting function without grepping or reading the whole file.",
+      "files": []
+    }
+  ]
+}

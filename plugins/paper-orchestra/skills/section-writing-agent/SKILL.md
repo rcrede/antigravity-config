@@ -1,0 +1,189 @@
+---
+name: section-writing-agent
+description: Step 4 of the PaperOrchestra pipeline (arXiv:2604.05018). ONE single multimodal LLM call that drafts the remaining paper sections (Abstract, Methodology, Experiments, Conclusion), extracts numeric values from experimental_log.md into LaTeX booktabs tables, splices the generated figures from Step 2, and merges everything into the template that already contains Intro + Related Work from Step 3. TRIGGER when the orchestrator delegates Step 4 or when the user asks to "write the methodology and experiments sections" or "fill in the rest of the paper".
+---
+
+# Section Writing Agent (Step 4)
+
+Faithful implementation of the Section Writing Agent from PaperOrchestra
+(Song et al., 2026, arXiv:2604.05018, §4 Step 4, App. F.1 pp. 47–49).
+
+**Cost: ONE LLM call** (App. B: "Section Writing Agent (1 call): A single,
+comprehensive multimodal call to draft and compile the complete LaTeX
+manuscript"). Do NOT split this into per-section calls — the paper
+explicitly designs it as one comprehensive call so the model can maintain
+global coherence across sections.
+
+## Inputs
+
+- `paperorchestra/outline.json` — the master plan
+- `ara/logic/claims.md` — technical details and core claims
+- `ara/evidence/` — raw data for tables and qualitative analysis
+- `paperorchestra/drafts/intro_relwork.typ` — the template **with Intro + Related
+  Work already filled in by Step 3**. This is your starting point. The
+  preamble, packages, style, and the two pre-filled sections must be
+  preserved verbatim.
+- `paperorchestra/citation_pool.json` — the citation map (`{key, title, abstract}`
+  for each verified paper)
+- `paperorchestra/refs.bib` — the BibTeX file
+- `paperorchestra/inputs/conference_guidelines.md` — formatting rules
+- `paperorchestra/figures/` — the actual PNG files from Step 2 (used as
+  multimodal vision input!)
+- `paperorchestra/figures/captions.json` — caption text per figure_id
+
+## Output
+
+- `paperorchestra/drafts/paper.typ` — the complete Typst paper, with all sections
+  filled. The Step 5 Refinement Agent will iterate on this file.
+
+## How to do it
+
+### 0.5. Inject Scientific Writing Standards
+
+CRITICAL: Before writing any text, you MUST explicitly read and adhere to the following bundled standard files:
+1. **`standards/scientific_writing_style.md`**: For the Known/New Contract, voice, and avoiding AI-isms.
+2. **`standards/typst_academic_standard.md`**: For LaTeX-style typesetting rules, equation numbering, and native subfigure logic in Typst.
+
+These standards must govern the entire output.
+
+### 1. Pre-extract metrics from the experimental log
+
+Run the deterministic helper to extract metrics from `ara/evidence/` into structured JSON for Typst table generation. Use standard Typst `#table` or `#figure(table())` formats.
+
+### 2. Compose the prompt and make ONE multimodal call
+
+Load `references/prompt.md` (verbatim Section Writing Agent prompt from App.
+F.1). Prepend the Anti-Leakage Prompt from
+`../paper-orchestra/references/anti-leakage-prompt.md`.
+
+The user message contains:
+
+- `outline.json` — full content
+- `ara/logic/claims.md` — full content
+- `ara/evidence/` files — full content (tables AND prose)
+- `intro_relwork.typ` — full content (this becomes `template.typ` for the prompt)
+- `citation_pool.json` — full content (becomes `citation_map.json`)
+- `conference_guidelines.md` — full content
+- `figures_list` — array of `{figure_id, filename, caption}` from
+  `captions.json` and the file listing
+- **The actual figure PNGs** as multimodal image inputs, so the model can
+  visually inspect them and write accurate descriptions / refer to them
+  correctly in the prose.
+
+If your host LLM has no vision input, fall back to text-only mode: pass the
+captions in `captions.json` as descriptions and tell the agent it cannot see
+the images directly. Quality drops noticeably (the paper notes that visual
+grounding measurably improves figure-text alignment), but the pipeline
+still completes.
+
+### 3. Save the output
+
+The agent's response is wrapped in `\`\`\`typst ... \`\`\`` fences. Extract
+the Typst code and save to `paperorchestra/drafts/paper.typ`.
+
+### 4. Run the deterministic gates
+
+```bash
+# Compile Typst to check sanity
+typst compile paperorchestra/drafts/paper.typ
+
+# Anti-leakage post-check: no author names, emails, affiliations
+python skills/paper-orchestra/scripts/anti_leakage_check.py \
+    paperorchestra/drafts/paper.typ
+```
+
+If any gate fails, **re-prompt the writing call** with the gate's error
+report appended to the user message and ask the agent to fix the specific
+issues. Do NOT try to fix the gate violations by hand — the model needs to
+see its own mistakes.
+
+## Critical rules from the prompt
+
+These are excerpted from `references/prompt.md` (App. F.1, pp. 47-49). The
+host agent MUST honor them on the writing call:
+
+### Existing-content preservation
+
+- DO NOT modify the text, style, or content of sections that are already
+  filled in `intro_relwork.tex`. Preserve Intro + Related Work verbatim.
+- Keep the preamble (packages, document class, style) **exactly** as is.
+- Come up with a good title if one is missing. Fill author names if missing
+  (but the Anti-Leakage Prompt says not to invent real ones — use a
+  placeholder like "Anonymous Authors" for double-blind).
+
+### Data and tables
+
+- Build Typst tables for the experimental results.
+- Extract numeric values directly from `ara/evidence/`. **Do not
+  hallucinate numbers** — use the exact values in the log.
+- Use the standard `#table` syntax.
+- All tables must appear before the Conclusion section, unless they are
+  explicitly placed in an Appendix.
+
+### Citations
+
+- The `outline.json` provides citation_hints per subsection. For each hint,
+  find the matching key in `citation_pool.json` (by title or content) and
+  use that exact key in `\cite{...}`.
+- **Use ONLY keys from `refs.bib`.** Inventing or guessing keys violates the
+  Lit Review Agent's verified pool.
+- **Read the abstract** from `citation_pool.json` for the papers you cite.
+  Use the abstract context to write specific, accurate sentences about
+  those works — not generic "[A, B] proposed methods for X".
+
+### Writing content
+
+- Write the missing sections following `outline.json`'s `section_plan`
+  structure exactly. Hierarchy rule: if 4.1 exists, 4.2 must exist.
+- Use formal mathematical equations, notations, and definitions where
+  appropriate AND directly supported by `ara/logic/` or `ara/evidence/`.
+  **Do not hallucinate math.** Do not use complex math just for the sake
+  of it.
+- Always provide detailed ablation studies and qualitative analysis of the
+  experimental results: what worked, what does not, and why.
+- Optional: discuss limitations and future work at the end.
+- If you put anything in the Appendix, the Appendix section appears AFTER
+  the References section, on a fresh new page.
+
+### Figures and visual fidelity
+
+- You are being given the actual image files of the figures. You MUST
+  describe them faithfully and accurately. Do NOT hallucinate
+  interpretations that contradict the visual evidence in the plots.
+- Use ALL of the figures provided in `figures/`. Use the exact filenames
+  including extensions (e.g., `.png`) in your `#image` commands.
+- DO NOT merge or group multiple figures into one display unless explicitly requested.
+- Use `#figure` wrappers for all images.
+- All figures must appear before the Conclusion section, unless explicitly
+  in the Appendix.
+- Refine the captions if necessary, but they are already provided in
+  `captions.json` and should generally be used as-is.
+- Do NOT include "Figure X" in the caption text — LaTeX handles numbering.
+
+### Style
+
+- Adopt the tone of a top-tier ML conference paper: dense, objective,
+  technical.
+- Match the indentation and spacing style of the original `template.tex`.
+  Do not change the overall LaTeX style.
+
+### Typst integrity
+
+- The output must compile flawlessly out-of-the-box via `typst compile`.
+- Use `@cite` references. No `\cite`.
+
+### Output format
+
+- Wrap the full updated `template.tex` in `\`\`\`latex ... \`\`\``.
+- The previously empty sections should now be filled.
+- Previously filled sections (Intro, Related Work) should remain mostly
+  untouched; only adjust for consistency purposes.
+
+## Resources
+
+- `references/prompt.md` — verbatim Section Writing Agent prompt from App. F.1
+- `references/latex-table-patterns.md` — booktabs rules + table-from-log examples
+- `references/figure-integration.md` — `\includegraphics`, 2-column handling, placement
+- `scripts/extract_metrics.py` — markdown tables in experimental_log → JSON
+- `scripts/latex_sanity.py` — unmatched braces, env mismatches, specials
+- `scripts/orphan_cite_gate.py` — every `\cite{KEY}` exists in refs.bib

@@ -1,0 +1,82 @@
+{
+  "mcpServers": {
+    "zotero-mcp": {
+      "command": "pixi",
+      "args": [
+        "run",
+        "--manifest-path",
+        "${HOME}/.mcp-servers/pixi.toml",
+        "zotero-mcp"
+      ],
+      "env": {
+        "ZOTERO_LOCAL": "true"
+      }
+    },
+    "mcp-obsidian": {
+      "command": "pixi",
+      "args": [
+        "run",
+        "--manifest-path",
+        "${HOME}/.mcp-servers/pixi.toml",
+        "mcp-obsidian"
+      ],
+      "env": {
+        "OBSIDIAN_API_KEY": "YOUR_OBSIDIAN_API_KEY"
+      }
+    },
+    "gmail": {
+      "serverUrl": "https://gmailmcp.googleapis.com/mcp/v1",
+      "oauth": {
+        "clientId": "YOUR_GOOGLE_CLIENT_ID",
+        "clientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
+      }
+    },
+    "drive": {
+      "serverUrl": "https://drivemcp.googleapis.com/mcp/v1",
+      "oauth": {
+        "clientId": "YOUR_GOOGLE_CLIENT_ID",
+        "clientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
+      }
+    },
+    "calendar": {
+      "serverUrl": "https://calendarmcp.googleapis.com/mcp/v1",
+      "oauth": {
+        "clientId": "YOUR_GOOGLE_CLIENT_ID",
+        "clientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
+      }
+    },
+    "people": {
+      "serverUrl": "https://people.googleapis.com/mcp/v1",
+      "oauth": {
+        "clientId": "YOUR_GOOGLE_CLIENT_ID",
+        "clientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
+      }
+    },
+    "chat": {
+      "serverUrl": "https://chatmcp.googleapis.com/mcp/v1",
+      "oauth": {
+        "clientId": "YOUR_GOOGLE_CLIENT_ID",
+        "clientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
+      }
+    },
+    "sheets": {
+      "serverUrl": "https://sheetsmcp.googleapis.com/mcp/v1",
+      "oauth": {
+        "clientId": "YOUR_GOOGLE_CLIENT_ID",
+        "clientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
+      }
+    },
+    "qmd": {
+      "command": "pixi",
+      "args": [
+        "run",
+        "-m",
+        "${HOME}/Documents/Obsidian Vault/pixi.toml",
+        "qmd",
+        "mcp"
+      ],
+      "cwd": "${HOME}/Documents/Obsidian Vault",
+      "env": {}
+    }
+  }
+}

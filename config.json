@@ -228,7 +228,8 @@
         "command(nsys)",
         "read_url(gemini.google.com)",
         "command(/usr/bin/orca)",
-        "command(sqlite3)"
+        "command(sqlite3)",
+        "read_url(nature.com)"
       ]
     },
     "nonWorkspaceFileAccessPolicy": "AGENT_SETTING_POLICY_ALLOW",

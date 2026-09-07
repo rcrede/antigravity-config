@@ -234,7 +234,8 @@
     },
     "nonWorkspaceFileAccessPolicy": "AGENT_SETTING_POLICY_ALLOW",
     "queuedMessageDeliveryStrategy": "MESSAGE_DELIVERY_STRATEGY_NEXT_INVOCATION",
-    "remoteControlHostname": "fedora-fritz-box-plasma-eclipse",
+    "remoteControlEnabled": true,
+    "remoteControlHostname": "fedora-desktop",
     "themeMode": "THEME_MODE_INHERIT"
   }
 }

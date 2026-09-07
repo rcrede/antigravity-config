@@ -6,11 +6,25 @@ sync_repo() {
   local name="$2"
   echo "🔄 Syncing ${name}..."
   cd "${dir}"
+  if [[ -d ".git/rebase-merge" || -d ".git/rebase-apply" ]]; then
+    echo "⚠️ Ongoing rebase found in ${name}, aborting and resetting to remote..."
+    git rebase --abort || true
+    git fetch origin main
+    git reset --hard origin/main
+  fi
+
   if [[ -n $(git status -s) ]]; then
     git add .
     git commit -m "sync: ${name} update $(date +'%Y-%m-%d %H:%M')"
   fi
-  git pull --rebase origin main || true
+
+  if ! git pull --rebase origin main; then
+    echo "⚠️ Conflict detected in ${name}, overwriting local with remote..."
+    git rebase --abort || true
+    git fetch origin main
+    git reset --hard origin/main
+  fi
+
   git push origin main
 }
 

@@ -8,7 +8,7 @@ Google Antigravity SDK agents.
 
 ### Default Model
 
-Google Antigravity SDK's default model is `gemini-3.7-flash`.
+Google Antigravity SDK's default model is `gemini-3.8-flash`.
 
 ### Default Image Generation Model
 
@@ -41,7 +41,7 @@ Here are small code snippets demonstrating advanced configurations using
 from google.antigravity import Agent, LocalAgentConfig
 
 config = LocalAgentConfig(
-    model="gemini-3.7-flash",
+    model="gemini-3.8-flash",
 )
 async with Agent(config=config) as agent:
     # Use the agent
@@ -250,15 +250,54 @@ For more details, see [mcp_integration.md](mcp_integration.md).
 
 ### Local Model Configuration
 
-The SDK supports running agents entirely on-device without an API key. Two
-additional config classes are available:
+The SDK supports running agents entirely on-device without an API key or cloud
+connectivity. Two config classes are available:
 
--   `LiteRTAgentConfig`: For running Gemma models locally via LiteRT-LM.
--   `LocalOpenAIAgentConfig`: For connecting to any OpenAI-compatible local
-    server (e.g., Ollama, LM Studio).
+-   `LiteRTAgentConfig`: For running local models (such as Gemma 4 26B) on-device
+    using Google's LiteRT runtime. Automatically manages the loopback inference
+    server lifecycle.
+-   `LocalOpenAIAgentConfig`: For connecting to an external OpenAI-compatible
+    local server (e.g., Ollama, LM Studio).
 
-For full setup instructions, hardware requirements, and configuration details,
-see [local_models.md](local_models.md).
+`LiteRTAgentConfig` automatically applies the lightweight preset upon
+instantiation (configuring core coding tools, pruning system instructions for
+smaller context windows, disabling subagents, and tuning context compaction).
+For `LocalOpenAIAgentConfig`, call `.lightweight()` explicitly to apply the
+same optimizations.
+
+```python
+import os
+from google.antigravity import Agent, LiteRTAgentConfig
+
+config = LiteRTAgentConfig(
+    model_path=os.path.expanduser(
+        "~/.litert-lm/models/gemma4-26b/model.litertlm"
+    ),
+)
+```
+
+For full setup instructions (including installing Gemma 4 26B via
+`litert-lm import`), hardware requirements, and configuration details, see
+[local_models.md](local_models.md).
+
+### Evaluation Configuration Preset
+
+Because the Antigravity SDK can be configured in many ways to satisfy different
+product surfaces, use `.eval()` when benchmarking or evaluating the SDK to apply
+a standardized, product-agnostic default that represents Gemini's core coding
+ability (disabling image generation and subagents, enabling daemon commands via
+`RunCommandConfig(enable_daemons=True)`, allowing autonomous tool execution, and
+applying `RetryConfig.benchmark()`):
+
+```python
+from google.antigravity import Agent, LocalAgentConfig
+
+config = LocalAgentConfig().eval()
+
+async with Agent(config) as agent:
+    response = await agent.chat("Run the test suite and fix any failing tests.")
+    print(await response.text())
+```
 
 ### Custom Environment Variables (Subprocess & Shell Isolation)
 
@@ -272,6 +311,26 @@ config = LocalAgentConfig(
     env={"PATH": "/custom/bin:" + os.environ.get("PATH", ""), "MY_CUSTOM_VAR": "foo"},
 )
 ```
+
+### `run_command` Configuration (`RunCommandConfig`)
+
+Configure the built-in `run_command` tool via `RunCommandConfig`, including
+running commands inside an OS-level sandbox with `enable_sandbox`:
+
+```python
+from google.antigravity import Agent, LocalAgentConfig, types
+from google.antigravity.hooks import policy
+
+config = LocalAgentConfig(
+    capabilities=types.CapabilitiesConfig(
+        run_command_config=types.RunCommandConfig(enable_sandbox=True),
+    ),
+    policies=[policy.allow_all()],
+)
+```
+
+For details and caveats, see
+[safety_policies.md](safety_policies.md#defense-in-depth-os-level-command-sandboxing).
 
 ### Session Budget Controls & Stop Reasons
 
@@ -290,3 +349,25 @@ config = LocalAgentConfig(
 ```
 
 For a full guide and multi-turn stop reason handling examples, see [budget_limits.md](../../examples/getting_started/budget_limits.md).
+
+### Context Compaction & Token Limits (`compaction_config`)
+
+Antigravity manages conversation context by compacting older conversation history when the active trajectory exceeds `token_threshold`.
+
+You can configure this using `CompactionConfig`:
+
+```python
+from google.antigravity import Agent, LocalAgentConfig, types
+
+config = LocalAgentConfig(
+    compaction_config=types.CompactionConfig(
+        token_threshold=50_000,
+    ),
+)
+```
+
+> [!NOTE]
+> When `compaction_config` is omitted (or fields are left unset), the backend's default threshold is used.
+
+For a full guide and code examples, see [compaction.md](../../examples/getting_started/compaction.md).
+

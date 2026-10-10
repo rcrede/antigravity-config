@@ -236,6 +236,7 @@
     "queuedMessageDeliveryStrategy": "MESSAGE_DELIVERY_STRATEGY_NEXT_INVOCATION",
     "remoteControlEnabled": true,
     "remoteControlHostname": "fedora-desktop",
-    "themeMode": "THEME_MODE_INHERIT"
+    "themeMode": "THEME_MODE_INHERIT",
+    "useAiCredits": false
   }
 }

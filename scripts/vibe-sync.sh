@@ -18,17 +18,25 @@ sync_repo() {
     git commit -m "sync: ${name} update $(date +'%Y-%m-%d %H:%M')"
   fi
 
-  if ! git pull --rebase origin main; then
-    echo "⚠️ Conflict detected in ${name}, overwriting local with remote..."
-    git rebase --abort || true
-    git fetch origin main
-    git reset --hard origin/main
+  if git remote | grep -q 'origin'; then
+    if ! git pull --rebase origin main; then
+      echo "⚠️ Conflict detected in ${name}, overwriting local with remote..."
+      git rebase --abort || true
+      git fetch origin main
+      git reset --hard origin/main
+    fi
+    git push origin main
+  else
+    echo "  ℹ️  No remote 'origin' configured for ${name}, committed locally."
   fi
-
-  git push origin main
 }
 
 sync_repo "${HOME}/.gemini/config" "Antigravity Config"
 sync_repo "${HOME}/Documents/Obsidian Vault" "Obsidian Vault"
 
-echo "✅ All Second Brain systems synchronized with GitHub!"
+if [ -d "${HOME}/.local/share/chezmoi" ]; then
+  sync_repo "${HOME}/.local/share/chezmoi" "Dotfiles"
+  chezmoi apply --force
+fi
+
+echo "✅ All Second Brain and System Dotfiles synchronized!"
